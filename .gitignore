@@ -1,0 +1,5 @@
+.vscode/
+3d-models/
+.pio/
+*.pio/
+tmp_firmware_droneh/
