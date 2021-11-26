@@ -19,8 +19,9 @@ typedef struct {
 } eeprom_t;
 
 typedef struct {
-    int value;
-    int  is_pressed;
+    uint16_t x;
+    uint16_t y;
+    bool is_pressed;
 } joystick_t;
 
 

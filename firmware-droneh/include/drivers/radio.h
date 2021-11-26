@@ -6,41 +6,25 @@
 #include "driver.h"
 #include "sys.h"
 #include "state.h"
+#include "protocol.h"
 
-
-typedef enum {
-    PACKET_TYPE_CONTROL,
-    PACKET_TYPE_INFO,
-} packet_type_t;
-
-typedef enum {
-    RX,
-    TX
-} radio_state_t;
-
-typedef struct {
-    uint8_t protocol;
-    packet_type_t type;
-    uint8_t* payload;
-} packet_t;
 
 
 class Radio : public Driver
 {
     private:
-        RF24          m_radio;
-        uint8_t       m_address[5];
-        radio_state_t m_radio_state;
-        uint8_t       m_buf[sizeof(state_t)];
+        RF24           m_radio;
+        uint8_t        m_address[5];
+        packet_t       m_packet_rx,
+                       m_packet_tx;
+        size_t         m_log_params_sent;
         bool rx();
-        bool tx();
+        bool tx(const packet_type_e type = PACKET_TYPE_ACK);
+        bool respond();
     public:
         Radio();
         bool init() override;
         void update() override;
-        bool start();
-        bool work(state_t current_state);
-        const radio_state_t getRadioState() const;
 };
 
 extern Radio radio;

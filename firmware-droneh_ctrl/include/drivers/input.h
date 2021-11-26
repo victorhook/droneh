@@ -6,7 +6,7 @@
 
 class InputHandler : public Driver {
     public:
-        InputHandler(State& state);
+        InputHandler(State* state);
         virtual bool init();
         virtual void update();
 };

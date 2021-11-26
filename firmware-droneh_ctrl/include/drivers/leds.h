@@ -6,7 +6,7 @@
 
 class LedHandler : public Driver {
     public:
-        LedHandler(State& state);
+        LedHandler(State* state);
         virtual bool init();
         virtual void update();
 };

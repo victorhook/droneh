@@ -3,7 +3,7 @@
 
 static size_t last_time;
 
-Debugger::Debugger(State& state, size_t time_delay)
+Debugger::Debugger(State* state, size_t time_delay)
     : Driver(state), m_time_delay(time_delay)
 {
 

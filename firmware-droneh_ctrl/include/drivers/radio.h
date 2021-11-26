@@ -7,12 +7,6 @@
 #include "RF24.h"
 
 
-#define PIN_MOSI 1
-#define PIN_MISO 1
-#define PIN_SCK  1
-#define PIN_CE   7
-#define PIN_CSN  8
-
 #define RX_TIMEOUT 1000
 #define RX_PIPE    1
 #define TX_RETRIES 3
@@ -33,10 +27,14 @@ class Radio : public Driver {
         radio_state_e m_radio_state;
         RF24          m_radio;
 
+        uint8_t       m_buf[4];
+        bool rx();
+        bool tx();
 
     public:
-        Radio(State& state);
+        Radio(State* state);
         void updateRadioSettings();
+        const radio_state_e getRadioState() const;
         virtual bool init();
         virtual void update();
 };

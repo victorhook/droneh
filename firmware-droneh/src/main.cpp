@@ -6,6 +6,10 @@
 #include "drivers/leds.h"
 #include "drivers/motors.h"
 
+#include "log.h"
+#include "controller.h"
+#include "estimator.h"
+
 
 void initSystem()
 {
@@ -32,6 +36,7 @@ void initSystem()
   while (!radio.init()) { Serial.println("RF not working"); }
   while (!led_control.init()) { Serial.println("Led driver not working"); }
   while (!motor_control.init()) { Serial.println("Motor driver not working"); }
+  while (!active_controller->init()) {Serial.println("Controller wont start!"); }
 
   led_control.startUpBlink();
 
@@ -45,17 +50,16 @@ void setup() {
 
 void printState()
 {
-  Serial.printf("Pitch: %d, ", current_state.pitch);
-  Serial.printf("Roll: %d, ", current_state.roll);
-  Serial.printf("Yaw: %d, ", current_state.yaw);
-  Serial.printf("Pitch: %d\n", current_state.thrust);
+  //Serial.printf("Pitch: %d, ", current_state.pitch);
+  //Serial.printf("Roll: %d, ", current_state.roll);
+  //Serial.printf("Yaw: %d, ", current_state.yaw);
+  //Serial.printf("Pitch: %d\n", current_state.thrust);
 }
 
 void loop() {
-  radio.work(current_state);
-  if (radio.getRadioState() == RX)
-    led_control.setRx();
-  else
-    led_control.setStatus();
-  printState();
+  radio.update();
+  //sensors.read(&sensor_values);
+  //Estimator
+
+  //motor_control.update();
 }

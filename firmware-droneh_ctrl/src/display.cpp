@@ -24,7 +24,7 @@ const char* messages[9] = {
 };
 
 
-DisplayHandler::DisplayHandler(State& state)
+DisplayHandler::DisplayHandler(State* state)
     : Driver(state)
 {
 

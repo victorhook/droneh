@@ -12,7 +12,7 @@ class Debugger : public Driver {
         size_t m_time_delay;
 
     public:
-        Debugger(State& state, size_t time_delay);
+        Debugger(State* state, size_t time_delay);
         virtual bool init();
         virtual void update();
 };
