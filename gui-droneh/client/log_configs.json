@@ -1,0 +1,115 @@
+[
+    {
+        "name": "state_est",
+        "params": [
+            {
+                "id": 12,
+                "log_type": "f",
+                "name": "estimate_roll",
+                "value": null
+            },
+            {
+                "id": 13,
+                "log_type": "f",
+                "name": "estimate_pitch",
+                "value": null
+            },
+            {
+                "id": 14,
+                "log_type": "f",
+                "name": "estimate_yaw",
+                "value": null
+            },
+            {
+                "id": 15,
+                "log_type": "f",
+                "name": "estimate_roll_deg",
+                "value": null
+            },
+            {
+                "id": 16,
+                "log_type": "f",
+                "name": "estimate_pitch_deg",
+                "value": null
+            },
+            {
+                "id": 17,
+                "log_type": "f",
+                "name": "estimate_yaw_deg",
+                "value": null
+            }
+        ],
+        "frequency_ms": 50
+    },
+    {
+        "name": "imu_bias",
+        "params": [
+            {
+                "id": 24,
+                "log_type": "f",
+                "name": "bias_acc_x",
+                "value": null
+            },
+            {
+                "id": 25,
+                "log_type": "f",
+                "name": "bias_acc_y",
+                "value": null
+            },
+            {
+                "id": 26,
+                "log_type": "f",
+                "name": "bias_acc_z",
+                "value": null
+            },
+            {
+                "id": 27,
+                "log_type": "f",
+                "name": "bias_gyro_x",
+                "value": null
+            },
+            {
+                "id": 28,
+                "log_type": "f",
+                "name": "bias_gyro_y",
+                "value": null
+            },
+            {
+                "id": 29,
+                "log_type": "f",
+                "name": "bias_gyro_z",
+                "value": null
+            }
+        ],
+        "frequency_ms": 50
+    },
+    {
+        "name": "est_individuals",
+        "params": [
+            {
+                "id": 9,
+                "log_type": "f",
+                "name": "g_est_roll",
+                "value": null
+            },
+            {
+                "id": 10,
+                "log_type": "f",
+                "name": "g_est_pitch",
+                "value": null
+            },
+            {
+                "id": 11,
+                "log_type": "f",
+                "name": "g_est_yaw",
+                "value": null
+            }
+        ],
+        "frequency_ms": 50
+    },
+    {
+        "name": "raw",
+        "params": [],
+        "frequency_ms": 50
+    }
+]
