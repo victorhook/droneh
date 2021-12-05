@@ -1,6 +1,11 @@
 #include "sys.h"
 
 
+bool driverErrors()
+{
+  return error != 0;
+}
+
 void scan()
 {
    byte error, address;

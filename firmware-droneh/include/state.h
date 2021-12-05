@@ -1,28 +1,19 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include "stdint.h"
+#include "types.h"
+#include "drivers/motors.h"
 
 typedef struct {
-    uint8_t thrust;
-    uint8_t roll;
-    uint8_t pitch;
-    uint8_t yaw;
+    vec3_t         attitude;
+    motor_thrust_t motor_raw;
+    uint16_t       thrust;
+    bool           is_armed;
 } state_t;
 
-typedef struct {
-    uint8_t thrust;
-    uint8_t roll;
-    uint8_t pitch;
-    uint8_t yaw;
-} setpoint_t;
+typedef state_t setpoint_t;
 
-typedef struct {
-    state_t measured;
-    state_t estimated;
-    state_t target;
-} State;
-
-extern State state;
+extern state_t state_estimated;
+extern state_t state_target;
 
 #endif /* STATE_H */

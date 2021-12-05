@@ -21,8 +21,11 @@ class Leds : public Driver
         bool init() override;
         void update() override;
         void startUpBlink() const;
+        void setRx(const uint8_t val);
+        void setStatus(const uint8_t val);
         void blinkRx(const size_t delay_ms = 50);
         void blinkStatus(const size_t delay_ms = 50);
+        void error();
         void off();
 };
 

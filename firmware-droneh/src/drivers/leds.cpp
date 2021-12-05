@@ -9,10 +9,10 @@ static inline void _blink_blocking()
 {
   LED_ON(SYS_LED_RX);
   LED_ON(SYS_LED_STATUS);
-  delay(100);
+  delay(200);
   LED_OFF(SYS_LED_RX);
   LED_OFF(SYS_LED_STATUS);
-  delay(100);
+  delay(200);
 }
 
 static inline void updateBlink(blink_t blink)
@@ -44,7 +44,7 @@ Leds::Leds()
 
 void Leds::startUpBlink() const
 {
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 3; i++) {
     _blink_blocking();
   }
 }
@@ -74,10 +74,28 @@ void Leds::blinkStatus(size_t delay_ms)
   setBlink(m_blinkStatus, delay_ms);
 }
 
+void Leds::error()
+{
+  m_blinkRx.active = false;
+  m_blinkStatus.active = false;
+  LED_ON(SYS_LED_STATUS);
+  LED_OFF(SYS_LED_RX);
+}
+
 void Leds::off()
 {
   LED_OFF(SYS_LED_RX);
   LED_OFF(SYS_LED_STATUS);
+}
+
+void Leds::setRx(const uint8_t val)
+{
+  val ? LED_ON(SYS_LED_RX) : LED_OFF(SYS_LED_RX);
+}
+
+void Leds::setStatus(const uint8_t val)
+{
+  val ? LED_ON(SYS_LED_STATUS) : LED_OFF(SYS_LED_STATUS);
 }
 
 Leds led_control;

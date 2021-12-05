@@ -7,13 +7,21 @@
 
 #define CONTROL_BASIC
 
+typedef enum {
+    CONTROL_STATE_RAW_MOTOR
+} control_state_e;
 
 class Controller {
-    private:
-        void calculateErr(const state_t& target, const state_t& estimated, state_t* err);
     public:
         bool init();
+        void setControlState(const control_state_e control_state);
+        const control_state_e getControlState() const;
+        void update(const motor_thrust_t motor_raw);
         virtual void update(const state_t target, const state_t estimated, setpoint_t* setpoint) = 0;
+    private:
+        void setMotorThrust(const motor_thrust_t motor_raw);
+        control_state_e m_control_state;
+        void calculateErr(const state_t& target, const state_t& estimated, state_t* err);
 };
 
 

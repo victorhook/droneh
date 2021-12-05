@@ -3,18 +3,17 @@
 
 #include <VL53L1X.h>
 
-#include "driver.h"
-#include "sys.h"
+#include "drivers/sensor.h"
 
 
-class ToF : public Driver
+class ToF : public AbstractSensor
 {
-    private:
-        VL53L1X m_tof;
     public:
         ToF();
         bool init() override;
         void update() override;
+    private:
+        VL53L1X m_tof;
 };
 
 extern ToF tof;

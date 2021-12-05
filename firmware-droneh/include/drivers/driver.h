@@ -10,5 +10,11 @@ class Driver {
         virtual void update() = 0;
 };
 
+// Macros
+#define init_driver(driver, driver_code) \
+    if (!driver.init()) {\
+        error |= (1 << driver_code); \
+    } \
+
 
 #endif /* DRIVER_H */

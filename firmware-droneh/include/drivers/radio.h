@@ -3,30 +3,23 @@
 
 #include "RF24.h"
 
-#include "driver.h"
-#include "sys.h"
-#include "state.h"
-#include "protocol.h"
+#include "comlink.h"
 
 
-
-class Radio : public Driver
+class Radio : public ComLink
 {
-    private:
-        RF24           m_radio;
-        uint8_t        m_address[5];
-        packet_t       m_packet_rx,
-                       m_packet_tx;
-        size_t         m_log_params_sent;
-        bool rx();
-        bool tx(const packet_type_e type = PACKET_TYPE_ACK);
-        bool respond();
     public:
         Radio();
         bool init() override;
-        void update() override;
+    private:
+        RF24           m_radio;
+        uint8_t        m_address[5];
+    protected:
+        bool read(uint8_t* buf, const size_t length) override;
+        bool write(const uint8_t* buf, const size_t length) override;
 };
 
 extern Radio radio;
+
 
 #endif /* RADIO_H */

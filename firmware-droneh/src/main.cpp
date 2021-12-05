@@ -1,22 +1,30 @@
 #include "sys.h"
+#include "error.h"
+#include "drivers/driver.h"
+#include "drivers/sensor.h"
 #include "drivers/radio.h"
 #include "drivers/baro.h"
-#include "drivers/mpu.h"
+#include "drivers/imu.h"
 #include "drivers/tof.h"
 #include "drivers/leds.h"
 #include "drivers/motors.h"
+#include "drivers/serial_link.h"
+#include "drivers/battery.h"
 
-#include "log.h"
 #include "controller.h"
+#include "filter_complementary.h"
 #include "estimator.h"
+#include "log.h"
+#include "state.h"
 
+
+void panic()
+{
+  led_control.error();
+}
 
 void initSystem()
 {
-  // Serial
-  Serial.begin(9600);
-  Serial.println("Booting up...");
-
   // I2C
   SYS_I2C.setSCL(SYS_I2C_SCL);
   SYS_I2C.setSDA(SYS_I2C_SDA);
@@ -30,36 +38,58 @@ void initSystem()
   SYS_RADIO_SPI.begin();
 
   // Initialize drivers
-  while (!baro.init()) { Serial.println("Failed to init Baro :("); }
-  while (!mpu.init()) { Serial.println("Failed to init MPU :("); }
-  while (!tof.init()) { Serial.println("Failed to init ToF :("); }
-  while (!radio.init()) { Serial.println("RF not working"); }
-  while (!led_control.init()) { Serial.println("Led driver not working"); }
-  while (!motor_control.init()) { Serial.println("Motor driver not working"); }
-  while (!active_controller->init()) {Serial.println("Controller wont start!"); }
+  init_driver(baro, DRIVER_BARO);
+  init_driver(imu, DRIVER_IMU);
+  init_driver(tof, DRIVER_TOF);
+  init_driver(radio, DRIVER_RADIO);
+  init_driver(led_control, DRIVER_LED_CONTROL);
+  init_driver(motor_control, DRIVER_MOTOR_CONTROL);
+  init_driver(serial_link, DRIVER_SERIAL_LINK);
+  init_driver(battery, DRIVER_BATTERY);
+
+  if (driverErrors()) {
+    panic();
+  }
+
+  //init_driver(active_controller, DRIVER_ACTIVE_CONTROLLER);
+  //while (!active_controller->init()) {Serial.println("Controller wont start!"); }
 
   led_control.startUpBlink();
-
-  Serial.println("Boot completed successful");
 }
 
 
 void setup() {
   initSystem();
 }
-
-void printState()
-{
-  //Serial.printf("Pitch: %d, ", current_state.pitch);
-  //Serial.printf("Roll: %d, ", current_state.roll);
-  //Serial.printf("Yaw: %d, ", current_state.yaw);
-  //Serial.printf("Pitch: %d\n", current_state.thrust);
-}
+int i = 0;
 
 void loop() {
-  radio.update();
-  //sensors.read(&sensor_values);
-  //Estimator
+  // Update drivers
+  //baro.update();
+  //tof.update();
+  imu.update();
+  //radio.update();
 
+  // Give estimates to estimator.
+  ///const baro_measurement_t baro_measurement         = baro.read();
+  ///const altitude_measurement_t altitude_measurement = tof.read();
+  sensor_readings.imu  = imu.read();
+  //sensor_readings.tof  = tof.read();
+  //sensor_readings.baro = baro.read();
+
+  estimator.estimate(sensor_readings.imu, &state_estimated);
+  serial_link.update();
+
+  // Set armed
+  state_estimated.is_armed = state_target.is_armed;
+
+  // Controller raw
+  active_controller->setControlState(CONTROL_STATE_RAW_MOTOR);
+  active_controller->update(state_target.motor_raw);
+
+  led_control.setStatus(state_estimated.is_armed ? 1 : 0);
+  //Serial.printf("Roll: %d, Pitch: %d, Yaw: %d\n", (int) (state_estimated.attitude.roll*(180 / PI)), (int) (state_estimated.attitude.pitch*(180 / PI)), (int) (state_estimated.attitude.yaw*(180 / PI)));
+  //led_control.update();
+  //sensors.read(&sensor_values);
   //motor_control.update();
 }

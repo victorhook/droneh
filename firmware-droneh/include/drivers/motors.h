@@ -2,7 +2,6 @@
 #define MOTORS_H
 
 #include "driver.h"
-#include "state.h"
 
 typedef struct {
   uint16_t m1;
@@ -10,7 +9,6 @@ typedef struct {
   uint16_t m3;
   uint16_t m4;
 } motor_thrust_t;
-
 
 class Motors : public Driver
 {

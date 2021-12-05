@@ -3,18 +3,17 @@
 
 #include "Adafruit_BMP085.h"
 
-#include "driver.h"
-#include "sys.h"
+#include "drivers/sensor.h"
 
 
-class Baro : public Driver
+class Baro : public AbstractSensor
 {
-    private:
-        Adafruit_BMP085 m_baro;
     public:
         Baro();
         bool init() override;
         void update() override;
+    private:
+        Adafruit_BMP085 m_baro;
 };
 
 extern Baro baro;

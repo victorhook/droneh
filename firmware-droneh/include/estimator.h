@@ -1,12 +1,22 @@
 #ifndef ESTIMATOR_H
 #define ESTIMATOR_H
 
+#include "filter.h"
 #include "state.h"
-
+#include "drivers/sensor.h"
 
 class Estimator {
     public:
-        static state_t estimate(const state_t measured);
+        Estimator(AbstractFilter* filter);
+        void estimate(const sensor_measurement_t raw_measurement, state_t* current_state);
+        void init();
+    private:
+        AbstractFilter* m_filter;
+        state_t         m_estimate,
+                        m_estimate_deg;
+        float           m_last_estimation;
 };
+
+extern Estimator estimator;
 
 #endif /* ESTIMATOR_H */
