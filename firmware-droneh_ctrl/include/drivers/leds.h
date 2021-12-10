@@ -6,9 +6,12 @@
 
 class LedHandler : public Driver {
     public:
-        LedHandler(State* state);
-        virtual bool init();
-        virtual void update();
+        LedHandler();
+        bool init() override;
+        void startupBlink();
+        void update() override;
 };
+
+extern LedHandler led_handler;
 
 #endif /* DRIVER_LED_H */

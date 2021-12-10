@@ -1,15 +1,11 @@
 #include "drivers/display.h"
 
-#include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 
 
 #define MAX_ROWS 5
 #define NBR_OF_SETTINGS 9
 
-static Adafruit_SSD1306 display(128, 64, &Wire);
 
 const char* messages[9] = {
     "Address",
@@ -24,19 +20,19 @@ const char* messages[9] = {
 };
 
 
-DisplayHandler::DisplayHandler(State* state)
-    : Driver(state)
-{
-
-}
+DisplayHandler::DisplayHandler()
+: m_display(128, 64, &Wire)
+{}
 
 bool DisplayHandler::init()
 {
-    return true;
+    return m_display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 }
 
 void DisplayHandler::update()
 {
+    m_display.println("Hello world");
+    m_display.display();
     /*
     display.clearDisplay();
     char buf[15];

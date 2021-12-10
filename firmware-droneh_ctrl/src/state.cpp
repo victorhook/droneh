@@ -1,6 +1,13 @@
 #include "state.h"
 #include "string.h"
 
+state_t state {
+    .is_armed = false,
+    .is_connected = false,
+    .operation_mode = OPERATION_MODE_NORMAL
+};
+
+
 const eeprom_t& State::getEepromSettings()
 {
     return m_eeprom_settings;
@@ -64,15 +71,5 @@ const void State::getRadioChannel(char* buf)
 
 const void State::getProtocol(char* buf)
 {
-    switch (m_eeprom_settings.active_protocol) {
-        case PROTOCOL_CAR:
-            strcpy(buf, "Car");
-            break;
-        case RF24_2MBPS:
-            strcpy(buf, "Drone");
-            break;
-        default:
-            strcpy(buf, "Error");
-            break;
-    }
+
 };

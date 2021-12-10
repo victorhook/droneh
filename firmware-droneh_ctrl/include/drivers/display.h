@@ -2,17 +2,20 @@
 #define DRIVER_DISPLAY_H
 
 #include "driver.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define SCREEN_ADDRESS 0x3C
 
 
 class DisplayHandler : public Driver {
+    public:
+        DisplayHandler();
+        bool init() override;
+        void update() override;
     private:
         int cursor;
-    public:
-        DisplayHandler(State* state);
-        virtual bool init();
-        virtual void update();
+        Adafruit_SSD1306 m_display;
 };
 
 

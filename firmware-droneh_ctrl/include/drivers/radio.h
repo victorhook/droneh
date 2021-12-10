@@ -7,37 +7,36 @@
 #include "RF24.h"
 
 
-#define RX_TIMEOUT 1000
+#define RX_TIMEOUT 10
 #define RX_PIPE    1
 #define TX_RETRIES 3
 
 
-typedef enum {
-    TX,
-    RX
-} radio_state_e;
-
-
 class Radio : public Driver {
-    private:
-        Protocol      protocol;
-        bool          m_is_connected;
-        uint16_t      m_last_sent;
-        uint16_t      m_retries;
-        radio_state_e m_radio_state;
-        RF24          m_radio;
-
-        uint8_t       m_buf[4];
-        bool rx();
-        bool tx();
-
     public:
-        Radio(State* state);
+        Radio();
+        bool init() override;
+        void update() override;
+        bool read(uint8_t* buf, const size_t length);
+        bool write(const uint8_t* buf, const size_t length);
+    private:
+        unsigned long m_last_packet;
+        packet_t      m_packet_rx,
+                      m_packet_tx;
+        RF24          m_radio;
+        bool transmit(const packet_type_e type);
+        bool receive();
+        bool respond();
+        void disconnect();
+        bool sendArm(const bool is_armed);
+        void setSetpoint();
+        void setRawMotorSetpoints();
+        void tryToConnect();
+
+        /* Future */
         void updateRadioSettings();
-        const radio_state_e getRadioState() const;
-        virtual bool init();
-        virtual void update();
 };
 
+extern Radio radio;
 
 #endif /* DRIVER_RADIO_H */

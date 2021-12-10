@@ -9,7 +9,6 @@
 
 #define RADIO_ADDRESS_SIZE 5
 
-
 typedef struct {
     uint8_t          radio_address[RADIO_ADDRESS_SIZE];
     rf24_pa_dbm_e    radio_power;
@@ -23,6 +22,19 @@ typedef struct {
     uint16_t y;
     bool is_pressed;
 } joystick_t;
+
+typedef enum {
+    OPERATION_MODE_NORMAL,
+    OPERATION_MODE_PROXY
+} operation_mode_e;
+
+typedef struct {
+    bool             is_armed;
+    bool             is_connected;
+    operation_mode_e operation_mode;
+    joystick_t       joystick_left;
+    joystick_t       joystick_right;
+} state_t;
 
 
 class State {
@@ -45,5 +57,8 @@ class State {
         const void getRadioChannel(char* buf);
         const void getProtocol(char* buf);
 };
+
+
+extern state_t state;
 
 #endif /* STATE_H */
