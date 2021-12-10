@@ -4,69 +4,82 @@
 pid_params_t pid_param_roll   = {.Kp = 1, .Ki = 1, .Kd = 1, .target = 0, .outMin = 1, .outMax = 1};
 pid_params_t pid_param_pitch  = {.Kp = 1, .Ki = 1, .Kd = 1, .target = 0, .outMin = 1, .outMax = 1};
 pid_params_t pid_param_yaw    = {.Kp = 1, .Ki = 1, .Kd = 1, .target = 0, .outMin = 1, .outMax = 1};
-pid_params_t pid_param_thrust = {.Kp = 1, .Ki = 1, .Kd = 1, .target = 0, .outMin = 1, .outMax = 1};
 
 
-void Controller::calculateErr(const state_t& target, const state_t& estimated, state_t* err)
-{
-    err->attitude.roll = target.attitude.roll - estimated.attitude.roll;
-    err->attitude.pitch = target.attitude.pitch - estimated.attitude.pitch;
-    err->attitude.yaw = target.attitude.yaw - estimated.attitude.yaw;
-    err->thrust = target.thrust - estimated.thrust;
-}
+Controller::Controller()
+: m_pid_roll(&pid_param_roll),
+  m_pid_pitch(&pid_param_pitch),
+  m_pid_yaw(&pid_param_yaw)
+{}
 
 bool Controller::init()
 {
     return true;
 }
 
-void Controller::setControlState(const control_state_e control_state)
+void Controller::update()
 {
-    m_control_state = control_state;
+    switch (state_estimated.mode) {
+        case OPERATING_MODE_MOTOR_THRUST_RAW:
+            m_motor_cmd.m1 = state_target.motor_raw.m1;
+            m_motor_cmd.m2 = state_target.motor_raw.m2;
+            m_motor_cmd.m3 = state_target.motor_raw.m3;
+            m_motor_cmd.m4 = state_target.motor_raw.m4;
+            motor_control.setThrust(m_motor_cmd);
+            break;
+        case OPERATING_MODE_NORMAL_CONTROL:
+            // 1. Update PID-controllers.
+            m_setpoint.roll = m_pid_roll.update(state_estimated.attitude.roll, state_target.attitude.roll);
+            m_setpoint.pitch = m_pid_pitch.update(state_estimated.attitude.pitch, state_target.attitude.pitch);
+            m_setpoint.yaw = m_pid_yaw.update(state_estimated.attitude.yaw, state_target.attitude.yaw);
+
+            // 2. Convert setpoint to motor commands
+            setpointToMotorCommand(m_setpoint, &m_motor_cmd);
+
+            // 3. Done
+            motor_control.setThrust(m_motor_cmd);
+            break;
+    }
 }
 
-const control_state_e Controller::getControlState() const
+uint16_t Controller::constraintMotorThrust(float thrust_estimate)
 {
-    return m_control_state;
+    return constrain(thrust_estimate, 0, 0xffff);
 }
 
-void Controller::update(const motor_thrust_t motor_raw)
+/*
+    https://www.youtube.com/watch?v=hGcGPUqB67Q&t=2s
+*/
+void Controller::setpointToMotorCommand(const setpoint_t& setpoint, motor_thrust_t* cmd)
 {
-    setMotorThrust(motor_raw);
+    cmd->MOTOR_FRONT_RIGHT = constraintMotorThrust(setpoint.thrust + setpoint.yaw + setpoint.pitch + setpoint.roll);
+    cmd->MOTOR_FRONT_LEFT  = constraintMotorThrust(setpoint.thrust - setpoint.yaw + setpoint.pitch - setpoint.roll);
+    cmd->MOTOR_BACK_RIGHT  = constraintMotorThrust(setpoint.thrust - setpoint.yaw - setpoint.pitch + setpoint.roll);
+    cmd->MOTOR_BACK_LEFT   = constraintMotorThrust(setpoint.thrust + setpoint.yaw - setpoint.pitch - setpoint.roll);
+}
+
+void Controller::updatePids()
+{
+    // Set new target setpoints.
+    m_pid_roll.setTarget(state_target.attitude.roll);
+    m_pid_pitch.setTarget(state_target.attitude.pitch);
+    m_pid_yaw.setTarget(state_target.attitude.yaw);
+
+    // Calculate new values
+    m_setpoint.roll   = m_pid_roll.update(state_estimated.attitude.roll);
+    m_setpoint.pitch  = m_pid_pitch.update(state_estimated.attitude.pitch);
+    m_setpoint.yaw    = m_pid_yaw.update(state_estimated.attitude.yaw);
+
 }
 
 void Controller::setMotorThrust(const motor_thrust_t motor_raw)
 {
-    if (!state_estimated.is_armed)
-        return;
-    motor_control.setThrust(motor_raw);
+    if (state_estimated.is_armed)
+        motor_control.setThrust(motor_raw);
+    else
+        motor_control.off();
 }
 
-/* AttitudeController */
-AttitudeController::AttitudeController()
- : pid_roll(&pid_param_roll),
-   pid_pitch(&pid_param_pitch),
-   pid_yaw(&pid_param_yaw),
-   pid_thrust(&pid_param_thrust)
-{}
 
-void AttitudeController::update(const state_t target, const state_t estimated,
-                                setpoint_t* setpoint)
-{
-    // Set new target setpoints.
-    pid_roll.setTarget(target.attitude.roll);
-    pid_pitch.setTarget(target.attitude.pitch);
-    pid_yaw.setTarget(target.attitude.yaw);
-    pid_thrust.setTarget(target.thrust);
 
-    // Calculate new values
-    setpoint->attitude.roll   = pid_roll.update(estimated.attitude.roll);
-    setpoint->attitude.pitch  = pid_pitch.update(estimated.attitude.pitch);
-    setpoint->attitude.yaw    = pid_yaw.update(estimated.attitude.yaw);
-    setpoint->thrust = pid_thrust.update(estimated.thrust);
-}
-
-#ifdef CONTROL_BASIC
-    Controller* active_controller = (Controller*) new AttitudeController();
-#endif
-
+Controller controller;

@@ -15,6 +15,7 @@ class Estimator {
         state_t         m_estimate,
                         m_estimate_deg;
         float           m_last_estimation;
+        size_t          m_update_period;
 };
 
 extern Estimator estimator;

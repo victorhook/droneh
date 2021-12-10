@@ -25,6 +25,7 @@ class PidController {
     public:
         PidController(pid_params_t* params);
         void setTarget(float new_target);
+        float update(float estimate, float target);
         float update(float value);
 };
 

@@ -21,7 +21,7 @@ typedef struct {
 
 typedef struct {
     float temperature;
-    float pressure;
+    int32_t pressure;
     float altitude;
 } baro_measurement_t;
 
@@ -41,26 +41,25 @@ typedef struct {
     sensor_type_e type;
 } sensor_measurement_t;
 
-typedef struct {
-    sensor_measurement_t imu;
-    sensor_measurement_t baro;
-    sensor_measurement_t tof;
-} sensor_readings_t;
-
 
 class AbstractSensor : public Driver {
     public:
-        const sensor_measurement_t& read() const;
+        void update();
+        void calibrate();
+        const sensor_measurement_t& read();
         virtual bool init() = 0;
-        virtual void update() = 0;
-        virtual void calibrate();
     protected:
+        AbstractSensor(const uint16_t sampling_frequency);
+        virtual void doCalibrate() = 0;
+        virtual void doUpdate() = 0;
         sensor_measurement_t m_last_measurement;
         bool                 m_is_calibrated;
+        uint16_t             m_sampling_frequency,
+                             m_sampling_period;
+    private:
+        unsigned long        m_ms_since_last_sample;
 };
 
-
-extern sensor_readings_t sensor_readings;
 
 
 #endif /* SENSOR_H */

@@ -1,9 +1,11 @@
 #include "filter_lowpass.h"
 
+
 FilterMovingAverage::FilterMovingAverage(const size_t order)
- : m_order(order)
+: m_order(order)
 {
-    assert(order < MAX_MOVING_AVERAGE_FILTER_LENGTH);
+    memset(m_samples, 0, order);
+    memset(m_h, 1/order, order);
 }
 
 void FilterMovingAverage::shiftSamples()
@@ -13,15 +15,19 @@ void FilterMovingAverage::shiftSamples()
     }
 }
 
-
 float FilterMovingAverage::update(const float value)
 {
     shiftSamples();
     m_samples[0] = value;
+
+    if (m_samples_taken < m_order) {
+        m_samples_taken++;
+        return value;
+    }
+
     float res = 0;
     for (int i = 0; i <= m_order; i++) {
-        res += m_samples[i];
+        res += m_samples[i] / (m_order + 1);
     }
-    res /= (m_order + 1);
     return res;
 }

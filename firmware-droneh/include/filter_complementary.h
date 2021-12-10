@@ -15,9 +15,11 @@ class FilterComplementary : public AbstractFilter {
         void filter(const imu_measurement_t raw_measurement, const state_t* current_state, state_t* estimate, const float dt) override;
     private:
         #ifdef USE_LOWPASS_FILTER_FOR_ACCELERATION
-            FilterMovingAverage m_moving_average;
+            FilterMovingAverage m_moving_average_acc_x,
+                                m_moving_average_acc_y,
+                                m_moving_average_acc_z;
         #endif
-        vec3_t m_acc_est_unfiltered,
+        vec3_t m_acc_filtered,
                m_acc_est,
                m_gyro_est,
                m_dgyro;

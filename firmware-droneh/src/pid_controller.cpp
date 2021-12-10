@@ -15,6 +15,12 @@ void PidController::setTarget(float new_target)
     params->target = new_target;
 }
 
+float PidController::update(float estimate, float target)
+{
+    setTarget(target);
+    return update(estimate);
+}
+
 float PidController::update(float estimate)
 {
     float curr_time = millis();

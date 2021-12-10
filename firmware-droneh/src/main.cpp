@@ -17,6 +17,8 @@
 #include "log.h"
 #include "state.h"
 
+#include "debug.h"
+
 
 void panic()
 {
@@ -53,7 +55,6 @@ void initSystem()
 
   //init_driver(active_controller, DRIVER_ACTIVE_CONTROLLER);
   //while (!active_controller->init()) {Serial.println("Controller wont start!"); }
-
   led_control.startUpBlink();
 }
 
@@ -61,35 +62,16 @@ void initSystem()
 void setup() {
   initSystem();
 }
-int i = 0;
 
 void loop() {
-  // Update drivers
-  //baro.update();
-  //tof.update();
+  // Update Sensors
   imu.update();
-  //radio.update();
+  radio.update();
 
-  // Give estimates to estimator.
-  ///const baro_measurement_t baro_measurement         = baro.read();
-  ///const altitude_measurement_t altitude_measurement = tof.read();
-  sensor_readings.imu  = imu.read();
-  //sensor_readings.tof  = tof.read();
-  //sensor_readings.baro = baro.read();
+  estimator.estimate(imu.read(), &state_estimated);
+  //serial_link.update();
+  controller.update();
+  led_control.update();
+  motor_control.update();
 
-  estimator.estimate(sensor_readings.imu, &state_estimated);
-  serial_link.update();
-
-  // Set armed
-  state_estimated.is_armed = state_target.is_armed;
-
-  // Controller raw
-  active_controller->setControlState(CONTROL_STATE_RAW_MOTOR);
-  active_controller->update(state_target.motor_raw);
-
-  led_control.setStatus(state_estimated.is_armed ? 1 : 0);
-  //Serial.printf("Roll: %d, Pitch: %d, Yaw: %d\n", (int) (state_estimated.attitude.roll*(180 / PI)), (int) (state_estimated.attitude.pitch*(180 / PI)), (int) (state_estimated.attitude.yaw*(180 / PI)));
-  //led_control.update();
-  //sensors.read(&sensor_values);
-  //motor_control.update();
 }

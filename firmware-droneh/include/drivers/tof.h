@@ -11,7 +11,8 @@ class ToF : public AbstractSensor
     public:
         ToF();
         bool init() override;
-        void update() override;
+        void doUpdate() override;
+        void doCalibrate() override;
     private:
         VL53L1X m_tof;
 };

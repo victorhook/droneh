@@ -15,8 +15,8 @@ class IMU : public AbstractSensor
     public:
         IMU();
         bool init() override;
-        void update() override;
-        void calibrate() override;
+        void doUpdate() override;
+        void doCalibrate() override;
 
     private:
         void readSensor();
@@ -25,5 +25,6 @@ class IMU : public AbstractSensor
 };
 
 extern IMU imu;
+extern sensor_measurement_t measurement_imu;
 
 #endif /* IMU_H */

@@ -11,8 +11,13 @@ class Baro : public AbstractSensor
     public:
         Baro();
         bool init() override;
-        void update() override;
+        void doUpdate() override;
+        void doCalibrate() override;
     private:
+        void readSensor();
+        float readAltitude();
+        uint32_t        m_pressure_at_startup;
+        float           m_bias_altitude;
         Adafruit_BMP085 m_baro;
 };
 

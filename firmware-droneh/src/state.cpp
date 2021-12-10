@@ -14,7 +14,9 @@ state_t state_estimated {
         .m4 = 0
     },
     .thrust = 0,
-    .is_armed = false
+    .mode = OPERATING_MODE_NORMAL_CONTROL,
+    .is_armed = false,
+    .is_connected = false
 };
 
 state_t state_target {
@@ -30,5 +32,7 @@ state_t state_target {
         .m4 = 0
     },
     .thrust = 0,
-    .is_armed = false
+    .mode = OPERATING_MODE_NORMAL_CONTROL,
+    .is_armed = false,
+    .is_connected = false
 };
