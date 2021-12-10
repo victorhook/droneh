@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.constants import LEFT
 
-
+from ui.tabs.fly import Fly
 from ui.tabs.motor_test import MotorTest
 from ui.tabs.plotter import Plotter
 from ui.tabs.log_settings import LogSettings
@@ -21,8 +21,9 @@ class Center(ttk.Frame):
         self.tabs.add(MotorTest(self.tabs), text='Motor Test')
         self.tabs.add(Plotter(self.tabs), text='Plotter')
         self.tabs.add(LogSettings(self.tabs), text='Log Settings')
+        self.tabs.add(Fly(self.tabs), text='Fly')
         self._selected_tab = None
-        self.tabs.select(0)
+        self.tabs.select(3)
 
         self.tabs.bind("<<NotebookTabChanged>>", self._select_tab)
 

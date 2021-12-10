@@ -103,13 +103,9 @@ class Model3D(ttk.Frame):
         dpitch = pitch - self.pitch
         dyaw = yaw - self.yaw
 
-        try:
-            self.mesh.transform.rotate(droll, np.array([0, 1, 0]))
-            self.mesh.transform.rotate(-dpitch, np.array([1, 0, 0]))
-        except ValueError:
-            # Math issues with rotations sometimes
-            pass
-        #self.mesh.transform.rotate(dyaw, np.array([0, 0, 1]))
+        self.mesh.transform.rotate(droll, np.array([0, 1, 0]))
+        self.mesh.transform.rotate(-dpitch, np.array([1, 0, 0]))
+        self.mesh.transform.rotate(dyaw, np.array([0, 0, 1]))
 
         self.roll = roll
         self.pitch = pitch
