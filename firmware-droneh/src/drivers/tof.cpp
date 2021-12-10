@@ -2,26 +2,29 @@
 
 
 ToF::ToF()
-    : m_tof()
-{
-
-}
+: AbstractSensor(50),
+  m_tof()
+{}
 
 bool ToF::init()
 {
     m_tof.setBus(&SYS_I2C);
     m_tof.setTimeout(500);
-    return m_tof.init();
-    /*
-    sensor.setDistanceMode(VL53L1X::Long);
-    sensor.setMeasurementTimingBudget(50000);
-    sensor.startContinuous(50);
-    */
+    if (!m_tof.init())
+        return false;
+    m_tof.setDistanceMode(VL53L1X::Long);
+    m_tof.setMeasurementTimingBudget(50000);
+    m_tof.startContinuous(50);
+    return true;
 }
 
-void ToF::update()
+void ToF::doUpdate()
 {
-
+    m_last_measurement.tof.altitude  = m_tof.read();
+    m_last_measurement.timestamp     = millis();
 }
+
+void ToF::doCalibrate()
+{}
 
 ToF tof;

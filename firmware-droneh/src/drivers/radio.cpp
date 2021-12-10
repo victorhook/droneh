@@ -1,6 +1,6 @@
 #include "drivers/radio.h"
 
-
+#define RX_TIMEOUT 10
 const uint8_t _address[5] = {'A', 'A', 'A', 'A', 'A'};
 
 
@@ -19,8 +19,7 @@ bool Radio::init()
     m_radio.setChannel(125);
     m_radio.setDataRate(RF24_2MBPS);
     m_radio.setPALevel(RF24_PA_MAX);
-    //m_radio.setPayloadSize(sizeof(state_t));
-    m_radio.setPayloadSize(4);
+    m_radio.setPayloadSize(32);
     m_radio.openWritingPipe(m_address);
     m_radio.openReadingPipe(1, m_address);
     return true;
@@ -29,15 +28,18 @@ bool Radio::init()
 
 bool Radio::read(uint8_t* buf, const size_t length)
 {
+    bool success = false;
     m_radio.startListening();
-
-    if (m_radio.available()) {
-        m_radio.read(buf, length);
-        m_radio.stopListening();
-        return true;
+    unsigned long t0 = millis();
+    while ((millis() - t0) < RX_TIMEOUT) {
+        if (m_radio.available()) {
+            m_radio.read(buf, length);
+            success = true;
+        }
     }
 
-    return false;
+    m_radio.stopListening();
+    return success;
 }
 
 bool Radio::write(const uint8_t* buf, const size_t length)

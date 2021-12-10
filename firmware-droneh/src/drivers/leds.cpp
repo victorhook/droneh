@@ -1,5 +1,5 @@
 #include "drivers/leds.h"
-
+#include "state.h"
 
 #define LED_ON(led)  digitalWrite(led, HIGH)
 #define LED_OFF(led) digitalWrite(led, LOW)
@@ -60,8 +60,10 @@ bool Leds::init()
 
 void Leds::update()
 {
-  updateBlink(m_blinkRx);
-  updateBlink(m_blinkStatus);
+  //updateBlink(m_blinkRx);
+  //updateBlink(m_blinkStatus);
+  setRx(state_estimated.is_connected ? 1 : 0);
+  setStatus(state_estimated.is_armed ? 1 : 0);
 }
 
 void Leds::blinkRx(const size_t delay_ms)

@@ -8,7 +8,6 @@ static bool _is_init = false;
 
 ComLink::ComLink()
 : m_log_params_sent(0),
-  m_connected(false),
   m_state(NORMAL)
 {
     if (_is_init)
@@ -17,15 +16,22 @@ ComLink::ComLink()
     _is_init = true;
 }
 
+void ComLink::disconnect()
+{
+    // If we're connected and timeout occurs, we break the connection.
+    state_target.is_connected = false;
+    // Disarm on disconnection, to prevent too much chaos!
+    state_target.is_armed = false;
+    // Reset sent log params.
+    m_log_params_sent = 0;
+}
+
 void ComLink::update()
 {
-    if (m_connected && ((millis() - m_last_packet) > DISCONNECT_TIMEOUT_MS) ) {
-        // If we're connected and timeout occurs, we break the connection.
-        m_connected = false;
+    if (state_estimated.is_connected && ((millis() - m_last_packet) > DISCONNECT_TIMEOUT_MS) ) {
+        disconnect();
+        return;
     }
-
-    m_packet_tx.payload[0] = m_connected;
-    m_packet_tx.payload[1] = m_last_packet;
 
     switch (m_state) {
         case NORMAL:
@@ -36,11 +42,6 @@ void ComLink::update()
         break;
     }
 
-    if (m_connected) {
-        led_control.setRx(1);
-    } else {
-        led_control.setRx(0);
-    }
 }
 
 bool ComLink::receive()
@@ -71,22 +72,24 @@ bool ComLink::respond()
 {
     switch (m_packet_rx.type) {
         case PACKET_TYPE_CONNECT_REQUEST:
-            if (!m_connected) {
+            if (!state_estimated.is_connected) {
+                state_target.is_connected = true;
                 transmit(PACKET_TYPE_CONNECT_REQUEST_ACK);
-                m_connected = true;
             }
             break;
         case PACKET_TYPE_DISCONNECT:
-            if (m_connected) {
+            if (state_estimated.is_connected) {
                 transmit(PACKET_TYPE_DISCONNECT_ACK);
-                m_connected = false;
+                disconnect();
             }
             break;
         case PACKET_TYPE_RAW_MOTOR_THRUST:
             setRawMotorSetpoints();
             transmit(PACKET_TYPE_RAW_MOTOR_THRUST_ACK);
             break;
-        case PACKET_TYPE_SETPOINT_ATTITUDE:
+        case PACKET_TYPE_SETPOINT:
+            setSetpoint();
+            transmit(PACKET_TYPE_SETPOINT_ACK);
             break;
         case PACKET_TYPE_LOGGING_DOWNLOAD:
             m_state = DOWNLOAD_LOG_PARAM;
@@ -132,6 +135,7 @@ void ComLink::sendAvailableLogParam()
         // Indicate that we've sent all logging parameters.
         transmit(PACKET_TYPE_LOGGING_DOWNLOAD_ACK_DONE);
         m_state = NORMAL;
+        m_log_params_sent = 0;
     }
 }
 
@@ -144,11 +148,28 @@ void ComLink::sendStatusUpdate()
 /* -- Helpers -- */
 void ComLink::setRawMotorSetpoints()
 {
-    // Thrust levels for each motor, each thrust is 2 bytes long.
+    /*
+        Bytes | 0-1  | 2-3   | 4-5 | 6-7 |
+              |  M1  |  M2   | M3  | M4  |
+    */
     memcpy(&state_target.motor_raw.m1, &m_packet_rx.payload[0], 2);
     memcpy(&state_target.motor_raw.m2, &m_packet_rx.payload[2], 2);
     memcpy(&state_target.motor_raw.m3, &m_packet_rx.payload[4], 2);
     memcpy(&state_target.motor_raw.m4, &m_packet_rx.payload[6], 2);
+    state_target.mode = OPERATING_MODE_MOTOR_THRUST_RAW;
+}
+
+void ComLink::setSetpoint()
+{
+    /*
+        Bytes | 0-1  | 2-3   | 4-5 | 6-7    |
+              | Roll | Pitch | Yaw | Thrust |
+    */
+    memcpy(&state_target.attitude.roll, &m_packet_rx.payload[0], 2);
+    memcpy(&state_target.attitude.pitch, &m_packet_rx.payload[2], 2);
+    memcpy(&state_target.attitude.yaw, &m_packet_rx.payload[4], 2);
+    memcpy(&state_target.thrust, &m_packet_rx.payload[6], 2);
+    state_target.mode = OPERATING_MODE_NORMAL_CONTROL;
 }
 
 void ComLink::fillPacketAvailableLogParam(const log_param_t& log_param)

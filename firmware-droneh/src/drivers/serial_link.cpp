@@ -14,12 +14,15 @@ bool SerialLink::init()
 
 bool SerialLink::read(uint8_t* buf, const size_t length)
 {
-    return m_serial.readBytes(buf, length) == length;
+    size_t read = m_serial.readBytes(buf, length);
+    return read == length;
 }
 
 bool SerialLink::write(const uint8_t* buf, const size_t length)
 {
-    return m_serial.write(buf, length);
+    size_t written = m_serial.write(buf, length);
+    m_serial.flush();
+    return written;
 }
 
 SerialLink serial_link(SYS_SERIAL_BAUD_RATE);

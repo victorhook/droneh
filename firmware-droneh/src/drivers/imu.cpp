@@ -3,7 +3,8 @@
 
 
 IMU::IMU()
-: m_imu()
+: AbstractSensor(100),
+  m_imu()
 {}
 
 bool IMU::init()
@@ -23,7 +24,7 @@ bool IMU::init()
     return m_imu.begin(MPU6050_I2CADDR_DEFAULT, &SYS_I2C, 0);
 }
 
-void IMU::calibrate()
+void IMU::doCalibrate()
 {
     imu_measurement_t calibration = {.acc_x=0, .acc_y=0, .acc_z=0, .gyro_x=0, .gyro_y=0, .gyro_z=0};
 
@@ -43,8 +44,6 @@ void IMU::calibrate()
     m_bias.gyro_x = calibration.gyro_x / CALIBRATION_READINGS;
     m_bias.gyro_y = calibration.gyro_y / CALIBRATION_READINGS;
     m_bias.gyro_z = calibration.gyro_z / CALIBRATION_READINGS;
-
-    m_is_calibrated = true;
 }
 
 void IMU::readSensor()
@@ -61,23 +60,24 @@ void IMU::readSensor()
     m_last_measurement.timestamp       = millis();
 }
 
-void IMU::update()
+void IMU::doUpdate()
 {
-    if (!m_is_calibrated)
-        calibrate();
-
     readSensor();
 
     //Serial.printf("Bias: ax: %f ay: %f az: %f,  gx: %f gy: %f gz: %f\n",
     //                m_bias.acc_x, m_bias.acc_y, m_bias.acc_z, m_bias.gyro_x, m_bias.gyro_y, m_bias.gyro_z);
 
     // Remove bias from accelerometer and gyroscope.
-    m_last_measurement.imu.acc_x  - m_bias.acc_x;
-    m_last_measurement.imu.acc_y  - m_bias.acc_y;
-    m_last_measurement.imu.acc_z  - m_bias.acc_z;
-    m_last_measurement.imu.gyro_x - m_bias.gyro_x;
-    m_last_measurement.imu.gyro_y - m_bias.gyro_y;
-    m_last_measurement.imu.gyro_z - m_bias.gyro_z;
+    m_last_measurement.imu.acc_x  -= m_bias.acc_x;
+    m_last_measurement.imu.acc_y  -= m_bias.acc_y;
+    m_last_measurement.imu.acc_z  -= m_bias.acc_z;
+    m_last_measurement.imu.gyro_x -= m_bias.gyro_x;
+    m_last_measurement.imu.gyro_y -= m_bias.gyro_y;
+    m_last_measurement.imu.gyro_z -= m_bias.gyro_z;
+
+    //Serial.printf("Bias: ax: %f ay: %f az: %f,  gx: %f gy: %f gz: %f\n",
+    //                m_last_measurement.imu.acc_x, m_last_measurement.imu.acc_y, m_last_measurement.imu.acc_z, m_last_measurement.imu.gyro_x, m_last_measurement.imu.gyro_y, m_last_measurement.imu.gyro_z);
 }
+
 
 IMU imu;
