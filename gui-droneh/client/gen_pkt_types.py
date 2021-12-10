@@ -15,6 +15,7 @@ if __name__ == '__main__':
         data = f.read()
         k = re.search(r'typedef enum {(.*)} packet_type_e;', data, flags=re.DOTALL)
         data = [a.strip()  for a in k.group(1).split(',')]
+        data = [a[12:] for a in data]
         for i, d in enumerate(filter(len, data)):
             print(f'    {d} = {i}')
 

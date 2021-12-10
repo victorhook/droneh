@@ -54,8 +54,8 @@ class Client:
 
         self._log_configs: t.Dict[str, log.ActiveLogConfig] = {}
 
+        self._trying_to_connect   = False
         self._is_armed            = False
-
         self._is_logging          = True
         self._is_connected        = False
         self._is_running_flag     = threading.Event()
@@ -73,17 +73,19 @@ class Client:
             print('Failed to open backend')
             return
 
-        self._transmit(PacketTypes.PACKET_TYPE_CONNECT_REQUEST)
-        packet = self._receive()
-        if packet.pkt_type == PacketTypes.PACKET_TYPE_CONNECT_REQUEST_ACK:
-            self._last_ack = now()
-            self.cb_on_connect.call('Connected!')
-            self._is_connected = True
-            self._is_logging = True
-            return True
+        self._trying_to_connect = True
+        packet = self._transmit(PacketType.CONNECT_REQUEST,
+                                expects=PacketType.CONNECT_REQUEST_ACK)
+        if packet is None:
+            return False
 
+        self._trying_to_connect = False
+
+        self._last_ack = now()
+        self.cb_on_connect.call('Connected!')
+        self._is_connected = True
+        self._is_logging = True
         self.cb_on_error.call('Failed to connect to client')
-        return False
 
     def start(self):
         # Running thread name is used to know differentiate between functions
@@ -98,14 +100,14 @@ class Client:
     @thread_safe
     def arm(self):
         packet = protocol.make_arm_set_packet(armed=True)
-        if self._transmit_packet(packet, expects=PacketTypes.PACKET_TYPE_ARM_SET_ACK):
+        if self._transmit_packet(packet, expects=PacketType.ARM_SET_ACK):
             # True means it's armed, False disarmed.
             self.cb_on_arm_change.call(True)
 
     @thread_safe
     def disarm(self):
         packet = protocol.make_arm_set_packet(armed=False)
-        if self._transmit_packet(packet, expects=PacketTypes.PACKET_TYPE_ARM_SET_ACK):
+        if self._transmit_packet(packet, expects=PacketType.ARM_SET_ACK):
             self.cb_on_arm_change.call(False)
 
     @thread_safe
@@ -113,7 +115,7 @@ class Client:
         if not self._is_connected:
             return
         packet = protocol.make_packet_motor_thrust(m1, m2, m3, m4)
-        self._transmit_packet(packet, expects=PacketTypes.PACKET_TYPE_RAW_MOTOR_THRUST_ACK)
+        self._transmit_packet(packet, expects=PacketType.RAW_MOTOR_THRUST_ACK)
 
     def add_log_config(self, log_config: log.ActiveLogConfig) -> None:
         self._log_configs[log_config.name] = log_config
@@ -130,7 +132,7 @@ class Client:
 
     def _get_log_params(self):
         # Start getting logging parameters.
-        self._transmit(PacketTypes.PACKET_TYPE_LOGGING_DOWNLOAD)
+        self._transmit(PacketType.LOGGING_DOWNLOAD)
 
         timeout = 2
         pkt_type = None
@@ -138,12 +140,12 @@ class Client:
 
         log_params = []
 
-        while ( (pkt_type != PacketTypes.PACKET_TYPE_LOGGING_DOWNLOAD_ACK_DONE) \
+        while ( (pkt_type != PacketType.LOGGING_DOWNLOAD_ACK_DONE) \
                and ((time.time() - t0) < timeout) ):
 
             packet = self._receive()
             pkt_type = packet.pkt_type
-            if pkt_type == PacketTypes.PACKET_TYPE_LOGGING_DOWNLOAD_ACK:
+            if pkt_type == PacketType.LOGGING_DOWNLOAD_ACK:
                 log_param = decode_log_param(packet.payload)
                 log_params.append(log_param)
 
@@ -164,9 +166,6 @@ class Client:
             # Perform logging.
             self._log()
 
-            # Ping pong.
-            #self._ping()
-
             # Status check
             self._status_check()
 
@@ -176,8 +175,8 @@ class Client:
         t1 = now()
 
         if t1 - self._last_status:
-            self._transmit(PacketTypes.PACKET_TYPE_STATUS_UPDATE)
-            packet = self._receive(expects=PacketTypes.PACKET_TYPE_STATUS_UPDATE_ACK)
+            packet = self._transmit(PacketType.STATUS_UPDATE,
+                             expects=PacketType.STATUS_UPDATE_ACK)
             if not packet:
                 return
 
@@ -188,8 +187,8 @@ class Client:
     def _ping(self):
         tnow = now()
         if (tnow - self._last_ack) > 300:
-            self._transmit(PacketTypes.PACKET_TYPE_PING)
-            pong = self._receive(expects=PacketTypes.PACKET_TYPE_PONG)
+            self._transmit(PacketType.PING)
+            pong = self._receive(expects=PacketType.PONG)
 
     def _log(self):
         if self._is_logging:
@@ -213,15 +212,14 @@ class Client:
             print('Runerr %s' % e)
 
     def _disconnect(self):
-        print('_disconnect 1')
         if not self._is_connected:
             return
-        print('_disconnect 2')
-        self._transmit(PacketTypes.PACKET_TYPE_DISCONNECT)
-        print('_disconnect 3')
+
+        self._transmit(PacketType.DISCONNECT)
+
         packet = self._receive()
-        print('_disconnect 4')
-        if packet.pkt_type == PacketTypes.PACKET_TYPE_DISCONNECT_ACK:
+
+        if packet.pkt_type == PacketType.DISCONNECT_ACK:
             print('Disconnect ok')
         else:
             print('Failed to disconnect!')
@@ -237,7 +235,7 @@ class Client:
         self._transmit_packet(packet)
         packet = self._receive()
 
-        if packet.pkt_type != PacketTypes.PACKET_TYPE_LOGGING_PARAM_READ_ACK:
+        if packet.pkt_type != PacketType.LOGGING_PARAM_READ_ACK:
             # TODO: This
             print('Got wrong packet type response when reading parameters!')
             print(f'Got: {packet}')
@@ -247,11 +245,14 @@ class Client:
         params = {param.name: param for param in params}
         return params
 
-    def _transmit(self, pkt_type: int, payload: bytes = None):
+    def _transmit(self, pkt_type: int, payload: bytes = None, expects: PacketType = None):
         packet = make_packet(pkt_type, payload)
-        self._transmit_packet(packet)
+        return self._transmit_packet(packet, expects)
 
-    def _receive(self, expects: PacketTypes = None) -> Packet:
+    def _receive(self, expects: PacketType = None) -> Packet:
+        if not self._is_connected and not self._trying_to_connect:
+            return
+
         data = self.backend.read(PACKET_SIZE)
         self._last_ack = now()
         packet = decode_packet(data)
@@ -259,12 +260,14 @@ class Client:
         if expects:
             if packet.pkt_type != expects:
                 print(f'Got incorrect response type, expected '
-                      f'{PacketTypes._STRINGS[expects]}, '
-                      f'got {PacketTypes._STRINGS[packet.pkt_type]}')
+                      f'{expects}, got {packet.pkt_type}')
                 return False
         return packet
 
-    def _transmit_packet(self, packet: Packet, expects: PacketTypes = None):
+    def _transmit_packet(self, packet: Packet, expects: PacketType = None) -> Packet:
+        if not self._is_connected and not self._trying_to_connect:
+            return
+
         data = encode_packet(packet)
         self.backend.write(data)
         if expects:

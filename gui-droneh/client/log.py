@@ -3,13 +3,14 @@ import typing as t
 from pathlib import Path
 import json
 import struct
+from enum import IntEnum
 
 LOG_PARAM_PATH = Path(__file__).parent.joinpath('log_params.json')
 LOG_GROUP_PATH = Path(__file__).parent.joinpath('log_configs.json')
 LOG_PARAM_MAX_LENGTH = 10
 
 
-class LogTypes:
+class LogTypes(IntEnum):
     U8 = 0
     I8 = 1
     U16 = 2
@@ -18,17 +19,6 @@ class LogTypes:
     I32 = 5
     F32 = 6
     F64 = 7
-
-    _STRINGS = {
-        0: 'U8',
-        1: 'I8',
-        2: 'U16',
-        3: 'I16',
-        4: 'U32',
-        5: 'I32',
-        6: 'F32',
-        7: 'F64',
-    }
 
 
 @dataclass
